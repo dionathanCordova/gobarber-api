@@ -1,0 +1,71 @@
+import { startOfHour, isBefore, getHours, format } from 'date-fns';
+import AppError from '@shared/errors/AppError';
+import { inject, injectable } from 'tsyringe';
+
+import Appointments from '@modules/appointments/infra/typeorm/entities/Appointments';
+import IAppointmentsRepository from '@modules/appointments/repositories/IAppointmentsRepository';
+import INotificationsRepository from '@modules/notifications/repositories/INotificationsRepository';
+
+interface IRequest {
+    provider_id: string;
+    user_id: string;
+    date: Date;
+}
+
+@injectable()
+class CreateAppointmentService {
+    constructor(
+        @inject('AppointmentRepository')
+        private appointmentsRepository: IAppointmentsRepository,
+
+        @inject('NotificationRepository')
+        private notificationRepository: INotificationsRepository,
+    ) {}
+
+    public async execute({
+        provider_id,
+        user_id,
+        date,
+    }: IRequest): Promise<Appointments> {
+        const appointmentDate = startOfHour(date);
+
+        if (isBefore(appointmentDate, Date.now())) {
+            throw new AppError("You can't create appointment on a past date");
+        }
+
+        if (user_id === provider_id) {
+            throw new AppError("You can't create an appointment with yourself");
+        }
+
+        if (getHours(appointmentDate) < 8 && getHours(appointmentDate) > 23) {
+            throw new AppError(
+                "You can't create an appointment on an closed perioddd",
+            );
+        }
+
+        const findAppointmentInSameDate = await this.appointmentsRepository.findByDate(
+            appointmentDate,
+        );
+
+        if (findAppointmentInSameDate) {
+            throw new AppError('This appointment is already booked');
+        }
+
+        const appointment = await this.appointmentsRepository.create({
+            provider_id,
+            user_id,
+            date: appointmentDate,
+        });
+
+        const dateFormat = format(appointmentDate, "dd/MM/yyy 'as' HH:mm");
+
+        await this.notificationRepository.create({
+            recipient_id: provider_id,
+            content: `Agendamento marcado para dia ${dateFormat}`,
+        });
+
+        return appointment;
+    }
+}
+
+export default CreateAppointmentService;
