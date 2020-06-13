@@ -1,7 +1,10 @@
+.idea/
+.vscode/
 node_modules
-
+build/
+temp/
 coverage
-
+tmp/*
 ormconfig.json
 ormconfig2.json
 
