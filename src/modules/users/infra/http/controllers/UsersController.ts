@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { classToClass } from 'class-transformer';
 
 import UserRopository from '@modules/users/infra/typeorm/repositories/UsersRepository';
 import CreateUserService from '@modules/users/services/CreateUserService';
@@ -14,6 +15,6 @@ export default class UsersController {
         const createUser = new CreateUserService(userRopository);
 
         const user = await createUser.execute({ name, email, password });
-        return response.json(user);
+        return response.json(classToClass(user));
     }
 }

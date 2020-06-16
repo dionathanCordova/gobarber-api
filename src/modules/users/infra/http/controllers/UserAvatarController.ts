@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { classToClass } from 'class-transformer';
 
 import UserRopository from '@modules/users/infra/typeorm/repositories/UsersRepository';
 import UpdateUserAvatarService from '@modules/users/services/UpdateUserAvatarService';
@@ -22,6 +23,6 @@ export default class UserAvatarController {
         });
         delete user.password;
 
-        return response.json(user);
+        return response.json(classToClass(user));
     }
 }

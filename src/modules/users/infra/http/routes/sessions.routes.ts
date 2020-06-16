@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { celebrate, Joi, Segments } from 'celebrate';
 
-import AuthenticateUserService from '@modules/users/services/AuthenticateUserService';
-import UserRopository from '@modules/users/infra/typeorm/repositories/UsersRepository';
+import SessionsController from '@modules/users/infra/http/controllers/SessionsController';
 
 const sessionsRouter = Router();
+const sessionsController = new SessionsController();
 
 sessionsRouter.post(
     '/',
@@ -14,20 +14,7 @@ sessionsRouter.post(
             password: Joi.string().required(),
         },
     }),
-    async (request, response) => {
-        const { email, password } = request.body;
-
-        const userRopository = new UserRopository();
-        const authenticateUser = new AuthenticateUserService(userRopository);
-
-        const { user, token } = await authenticateUser.execute({
-            email,
-            password,
-        });
-        delete user.password;
-
-        return response.json({ user, token });
-    },
+    sessionsController.create,
 );
 
 export default sessionsRouter;
