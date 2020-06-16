@@ -1,9 +1,12 @@
 import { compare } from 'bcryptjs';
+import { injectable, inject } from 'tsyringe';
+
+import AppError from '@shared/errors/AppError';
 import { sign } from 'jsonwebtoken';
 import User from '@modules/users/infra/typeorm/entities/User';
 import authConfig from '@config/auth';
 
-import AppError from '@shared/errors/AppError';
+import IHashProvider from '@modules/users/providers/HashProvider/models/IHashProvider';
 import IUserRepository from '../repositories/IUserRepository';
 
 interface IRequest {
@@ -16,8 +19,15 @@ interface ICreateUserDTO {
     token: string;
 }
 
+@injectable()
 class AuthenticateUserService {
-    constructor(private usersRepository: IUserRepository) {}
+    constructor(
+        @inject('UserRepository')
+        private usersRepository: IUserRepository,
+
+        @inject('HashProvider')
+        private hashProvider: IHashProvider,
+    ) {}
 
     public async execute({
         email,
